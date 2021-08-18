@@ -1,0 +1,32 @@
+# cookie字符串，直接从浏览器复制，格式如下
+cookies = "l=v; _uuid=xxxx; buvid3=xxxx; buvid_fp=xxxx; PVID=3"
+
+###### 黑白名单（格式 个人: 'uid_1'   应援团：'群ID_2'） ######
+# 全局白名单，空数组则全部放行
+whitelist = []
+# 全局黑名单，未启用，无需设置
+blacklist = []
+# 美图黑名单
+mt_blacklist = [
+    '221004361_2'  # 智能姬1团
+]
+# 鉴黄白名单
+jh_whitelist = [
+    '221004361_2',  # 智能姬1团
+    '1_1',  # bishi（uid:1）
+    '178362496_1', # 哔哩哔哩社区小管家
+    '221033250_2',  # bilibil直播11团
+]
+
+# 数据库配置，只兼容 postgres，端口默认 5432
+[db]
+host = '127.0.0.1' # 数据库IP
+dbname = 'bili' # 数据库名
+user = 'bili' # 数据库用户名
+password = 'xxxxxxxx' # 数据库密码
+
+# 腾讯鉴黄API
+[tx_api]
+app_id = '' # 腾讯API ID
+app_key = '' # 腾讯API KEY
+
