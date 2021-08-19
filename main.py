@@ -26,7 +26,7 @@ class Msg:
         self.mid = self.cookies['DedeUserID']
 
         self.bili = BiliAPI(self.cookies)
-        self.tx = TxAPI(self.conf['tx_api']['app_id'], self.conf['tx_api']['app_id'])
+        self.tx = TxAPI(self.conf['tx_api']['app_id'], self.conf['tx_api']['app_key'])
 
         self.db = DB(**self.conf['db'])
 
