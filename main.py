@@ -80,7 +80,9 @@ class Msg:
 
     # 消息处理函数
     def handle(self, session_msgs_data):
-        for msg in session_msgs_data:
+        img_index = 0
+        img_len = len([1 for msg in session_msgs_data if msg['msg_type'] == 2])
+        for index, msg in enumerate(session_msgs_data):
             receiver_id = msg['receiver_id']
             receiver_type = msg['receiver_type']
             sender_uid = msg['sender_uid']
@@ -100,6 +102,7 @@ class Msg:
 
             elif msg['msg_type'] == 2:
                 # 图片类型消息，进行图片内容识别打分
+                img_index += 1
                 if session_key in self.conf.get('jh_whitelist', []):
                     image_info = json.loads(msg['content'])
                     url = image_info['url']
@@ -113,24 +116,21 @@ class Msg:
                     else:
                         tx_data = img_info['tx_content_review']
 
-                    if tx_data['Suggestion'] in ['Block', 'Review']:
+                    if tx_data is None or tx_data.get('Suggestion') is None:
+                        print(f'图片内容识别异常：{tx_data}')
+                    elif tx_data['Suggestion'] in ['Block', 'Review']:
                         user_name = self.getUserName(sender_uid)
                         send_msg = f'@{user_name} ' + ('好图！' if tx_data['Suggestion'] == 'Block' else '还行。')
+                        if img_len > 1:
+                            send_msg += f' (第{img_index}张)'
                         for label in tx_data['LabelResults']:
-                            send_msg += f"\n{label['Scene']}/{label['Label']}/{label['SubLabel']}: {label['Score']}分"
+                            send_msg += f"\n{label['Scene']}/{label['Label']}/{label['SubLabel']}: {label['Score']}%"
                         send_msg += f"\n{url[url.rfind('/') + 1: url.rfind('.')]}"
-                        if tx_data['Suggestion'] == 'Block':
-                            self.bili.msg.sendImage(
-                                receiver_id, receiver_type,
-                                'https://message.biliimg.com/bfs/im/6e61f3bf26bdc128927917120087398845e8c4aa.jpg',
-                                189, 236
-                            )
-                        else:
-                            self.bili.msg.sendImage(
-                                receiver_id, receiver_type,
-                                'https://message.biliimg.com/bfs/im/668dc8b76359992c0514acf3b33aaccddd3acb64.jpg',
-                                343, 354
-                            )
+                        # self.bili.msg.sendImage(
+                        #     receiver_id, receiver_type,
+                        #     'https://message.biliimg.com/bfs/im/668dc8b76359992c0514acf3b33aaccddd3acb64.jpg',
+                        #     343, 354
+                        # )
                         self.bili.msg.sendText(receiver_id, receiver_type, send_msg)
 
     # 根据UID获取用户名（缓存6小时）
@@ -151,6 +151,7 @@ class Msg:
         msg_type = int(old_msg['msg_type'])
         url = old_msg['url']
         old_msg_time = int(old_msg['timestamp'])
+        content = old_msg['content']  # type:str
 
         sender_uid = msg['sender_uid']
         sender_uname = self.getUserName(sender_uid)
@@ -160,10 +161,11 @@ class Msg:
         time2 = time.strftime("%H:%M:%S", time.localtime(msg['timestamp']))
 
         if msg_type == 1:
-            self.bili.msg.sendText(receiver_id, receiver_type,
-                                   f'一条文字消息被撤回\n'
-                                   f'time: {time1}~{time2}\nuser: {sender_uname}\n'
-                                   f'{msg["content"][11:]}')
+            if not content.startswith('一条文字消息被撤回'):
+                self.bili.msg.sendText(receiver_id, receiver_type,
+                                       f'一条文字消息被撤回\n'
+                                       f'time: {time1}~{time2}\nuser: {sender_uname}\ncontent: {content}\n'
+                                       f'{msg["content"][11:]}')
         elif msg_type in [2, 6]:
             img_info = self.db.getImage(url)
             if img_info is None or img_info['short_url'] is None:

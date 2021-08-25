@@ -12,7 +12,8 @@ class DB:
 
     # 根据key获取消息
     def getMsgByKey(self, msg_key) -> dict:
-        sql = "select data->'msg_type' as msg_type, content->>'url' as url, data->'timestamp' as timestamp " \
+        sql = "select data->'msg_type' as msg_type, content->>'content' as content," \
+              " content->>'url' as url, data->'timestamp' as timestamp " \
               "from msg where msg_key = %s;"
         self.cursor.execute(sql, (msg_key,))
         return self.cursor.fetchone()
